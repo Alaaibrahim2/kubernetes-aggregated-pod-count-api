@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-count-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-count-api
+  template:
+    metadata:
+      labels:
+        app: pod-count-api
+    spec:
+      serviceAccountName: pod-count-api
+      containers:
+        - name: api
+          image: alaai/pod-count-api:v1
+          imagePullPolicy: Always
+          ports:
+            - name: https
+              containerPort: 8443
+          volumeMounts:
+            - name: tls
+              mountPath: /certs
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: pod-count-api-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pod-count-api
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: pod-count-api
+  ports:
+    - name: https
+      port: 443
+      targetPort: https
